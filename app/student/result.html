@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Result — SkillProof</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof</div>
+    <div class="navlinks"><a href="dashboard.html">Dashboard</a> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../index.html')">Logout</button></div>
+  </div>
+</header>
+
+<div class="wrap page narrow">
+  <div id="out"></div>
+</div>
+
+<footer class="site"><div class="wrap">SkillProof © 2026</div></footer>
+
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/questions.js"></script>
+<script>
+var me = SP.requireAuth('student','../index.html');
+var params = new URLSearchParams(location.search);
+var testId = params.get('test') || 'word';
+var meta = TEST_META[testId] || TEST_META.word;
+var r = SP.getResult(me.id, testId);
+
+if(!r){
+  document.getElementById('out').innerHTML = '<div class="alert alert-err">❌ Is test ka koi result nahi mila. Pehle test do!</div><div class="center"><a class="btn btn-blue" href="dashboard.html">Dashboard</a></div>';
+} else {
+  var rows = '';
+  if(r.mcq) rows += brow('❓ MCQ ('+r.mcq.correct+'/'+r.mcq.total+' sahi)', r.mcq.score+'%');
+  if(r.typing) rows += brow('⌨️ Typing ('+r.typing.wpm+' WPM, '+r.typing.accuracy+'%)', r.typing.score+'%');
+  if(r.practical) rows += brow('🔧 Practical ('+r.practical.tasksDone+'/'+r.practical.tasksTotal+' tasks)', r.practical.score+'%');
+
+  var badge = r.passed
+    ? '<span class="passbadge pass">✅ PASS — Mubarak!</span>'
+    : '<span class="passbadge failb">❌ FAIL — Dobara try karo! (60% chahiye)</span>';
+
+  var certBtn = r.passed
+    ? '<div class="center mt"><a class="btn btn-green" href="certificate.html?test='+testId+'">🎓 Download Certificate</a></div>'
+    : '';
+
+  var again = nextStep();
+
+  document.getElementById('out').innerHTML =
+    '<div class="score-hero"><div class="big'+(r.passed?'':' fail')+'">'+r.total+'%</div>'
+    + '<div class="lbl">'+meta.icon+' '+meta.name+' — Final Score</div>' + badge + '</div>'
+    + '<div class="break"><h3 style="margin-bottom:10px">📊 Breakdown</h3>'+rows+'</div>'
+    + certBtn + again
+    + '<div class="center mt"><a class="btn btn-ghost" href="dashboard.html">← Dashboard</a></div>';
+}
+function brow(l,v){ return '<div class="brow"><span>'+l+'</span><b>'+v+'</b></div>'; }
+
+function nextStep(){
+  /* guide student to the remaining part of this test */
+  var r = SP.getResult(me.id, testId);
+  if(testId==='word' && r.mcq && !r.practicalDone)
+    return '<div class="center mt"><a class="btn btn-blue" href="test-word.html">🔧 Ab Practical do →</a></div>';
+  if(testId==='excel' && r.mcq && !r.practicalDone)
+    return '<div class="center mt"><a class="btn btn-blue" href="test-excel.html">🔧 Ab Practical do →</a></div>';
+  if(testId==='powerpoint' && r.mcq && !r.practicalDone)
+    return '<div class="center mt"><a class="btn btn-blue" href="test-ppt.html">🔧 Ab Practical do →</a></div>';
+  if(testId==='inpage' && r.mcq && !r.typingDone)
+    return '<div class="center mt"><a class="btn btn-blue" href="test-typing.html?lang=ur">⌨️ Ab Urdu Typing do →</a></div>';
+  if(testId==='typing')
+    return '<div class="center mt"><a class="btn btn-blue" href="test-typing.html?lang=ur">⌨️ Urdu Typing bhi do →</a></div>';
+  return '';
+}
+</script>
+</body>
+</html>

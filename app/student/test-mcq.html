@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCQ Test — SkillProof</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof</div>
+    <div class="navlinks"><span id="tname"></span></div>
+  </div>
+</header>
+<div class="testbar"><div class="wrap">
+  <div><b id="title">MCQ Test</b></div>
+  <div style="display:flex;gap:14px;align-items:center">
+    <button class="btn btn-ghost btn-sm no-print" onclick="AntiCheat.goFullscreen()">⛶ Fullscreen</button>
+    <div class="timer" id="timer">10:00</div>
+  </div>
+</div></div>
+
+<div class="wrap page narrow">
+  <div class="warnbar" id="warn"></div>
+  <div class="progress"><div id="pbar" style="width:0%"></div></div>
+  <div id="quiz"></div>
+  <div class="testnav">
+    <button class="btn btn-ghost" id="prevBtn">← Pehle</button>
+    <span id="qcount" style="align-self:center;color:var(--muted)"></span>
+    <button class="btn btn-blue" id="nextBtn">Agla →</button>
+  </div>
+  <div class="center mt"><button class="btn btn-green" id="submitBtn">✅ Submit Test</button></div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/questions.js"></script>
+<script src="../assets/js/anticheat.js"></script>
+<script>
+var me = SP.requireAuth('student','../index.html');
+var params = new URLSearchParams(location.search);
+var subject = params.get('subject') || 'word';
+var meta = TEST_META[subject] || TEST_META.word;
+var bank = QUESTIONS[subject] || QUESTIONS.word;
+
+document.getElementById('title').textContent = meta.icon + ' ' + meta.name + ' — MCQ Test';
+document.getElementById('tname').textContent = me ? me.name : '';
+
+/* shuffle questions + options */
+var qs = SP.shuffle(bank).map(function(q){
+  var order = SP.shuffle([0,1,2,3]);
+  return { q:q.q, opts: order.map(function(i){return q.o[i];}), a: order.indexOf(q.a) };
+});
+var answers = new Array(qs.length).fill(-1);
+var cur = 0;
+var TOTAL = 600, left = TOTAL, done = false;
+
+AntiCheat.tabWatch({warnEl:'warn', max:3, onLock:finish});
+
+function render(){
+  var q = qs[cur];
+  var h = '<div class="qcard"><div class="qno">Sawal '+(cur+1)+' / '+qs.length+'</div>'
+    + '<div class="qtext">'+SP.esc(q.q)+'</div>';
+  q.opts.forEach(function(op,i){
+    h += '<button class="opt'+(answers[cur]===i?' sel':'')+'" onclick="pick('+i+')"><b>'+'ABCD'[i]+'.</b> '+SP.esc(op)+'</button>';
+  });
+  h += '</div>';
+  document.getElementById('quiz').innerHTML = h;
+  document.getElementById('qcount').textContent = (cur+1)+' / '+qs.length;
+  var answered = answers.filter(function(a){return a>=0;}).length;
+  document.getElementById('pbar').style.width = (answered/qs.length*100)+'%';
+  document.getElementById('prevBtn').style.visibility = cur===0?'hidden':'visible';
+  document.getElementById('nextBtn').textContent = cur===qs.length-1 ? 'Aakhri ✓' : 'Agla →';
+}
+window.pick = function(i){ answers[cur]=i; render(); };
+document.getElementById('prevBtn').onclick = function(){ if(cur>0){cur--;render();} };
+document.getElementById('nextBtn').onclick = function(){ if(cur<qs.length-1){cur++;render();} };
+
+var timerEl = document.getElementById('timer');
+var iv = setInterval(function(){
+  left--;
+  timerEl.textContent = SP.fmtTime(left);
+  if(left<=60) timerEl.classList.add('warn');
+  if(left<=0) finish();
+},1000);
+
+document.getElementById('submitBtn').onclick = function(){
+  var un = answers.filter(function(a){return a<0;}).length;
+  if(un>0 && !confirm(un+' sawal reh gaye hain! Phir bhi submit?')) return;
+  finish();
+};
+
+function finish(){
+  if(done) return; done = true; clearInterval(iv);
+  var correct = 0;
+  qs.forEach(function(q,i){ if(answers[i]===q.a) correct++; });
+  var score = Math.round(correct/qs.length*100);
+  /* merge into existing result (practical may already exist) */
+  var prev = SP.getResult(me.id, subject) || {};
+  prev.mcq = {score:score, correct:correct, total:qs.length};
+  /* recompute total */
+  var parts = [];
+  if(typeof prev.mcq.score==='number') parts.push(prev.mcq.score);
+  if(prev.practical && typeof prev.practical.score==='number') parts.push(prev.practical.score);
+  if(prev.typing && typeof prev.typing.score==='number') parts.push(prev.typing.score);
+  prev.total = parts.length? Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length) : score;
+  prev.passed = prev.total >= 60;
+  SP.saveResult(me.id, subject, prev);
+  /* next step */
+  var next = {word:'test-word.html', excel:'test-excel.html', powerpoint:'test-ppt.html'}[subject];
+  if(next && !prev.practicalDone){
+    if(confirm('MCQ ho gaya! ('+score+'%)\n\nAb Practical test do?')){ location.href = next; return; }
+  }
+  if(subject==='inpage' && !prev.typingDone){
+    if(confirm('MCQ ho gaya! ('+score+'%)\n\nAb Urdu Typing test do?')){ location.href = 'test-typing.html?lang=ur'; return; }
+  }
+  location.href = 'result.html?test='+subject;
+}
+render();
+</script>
+</body>
+</html>

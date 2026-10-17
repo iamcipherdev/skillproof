@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PowerPoint Practical — SkillProof</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof</div>
+    <div class="navlinks"><span id="tname"></span></div>
+  </div>
+</header>
+<div class="testbar"><div class="wrap">
+  <div><b>📅 PowerPoint — Practical Test</b></div>
+  <div style="display:flex;gap:14px;align-items:center">
+    <button class="btn btn-ghost btn-sm no-print" onclick="AntiCheat.goFullscreen()">⛶ Fullscreen</button>
+    <div class="timer" id="timer">15:00</div>
+  </div>
+</div></div>
+
+<div class="wrap page">
+  <div class="warnbar" id="warn"></div>
+  <div class="ppt-wrap">
+    <div>
+      <div class="slidelist" id="slist"></div>
+      <button class="btn btn-blue btn-block mt" onclick="addSlide()">＋ Add Slide</button>
+    </div>
+    <div>
+      <div class="slide-edit" id="sedit"></div>
+      <div class="tasks mt">
+        <h3>📋 Tasks</h3>
+        <div class="task" id="t0"><span class="tick"></span><span><b>3 slides</b> banao</span></div>
+        <div class="task" id="t1"><span class="tick"></span><span>Har slide mein <b>title</b> lagao</span></div>
+      </div>
+      <div class="center mt"><button class="btn btn-green" onclick="finish()">✅ Submit Practical</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/anticheat.js"></script>
+<script>
+var me = SP.requireAuth('student','../index.html');
+document.getElementById('tname').textContent = me ? me.name : '';
+var slides=[{title:'',body:''}], cur=0;
+var done=false, left=15*60;
+
+AntiCheat.tabWatch({warnEl:'warn', max:3, onLock:finish});
+
+function render(){
+  var lh='';
+  slides.forEach(function(s,i){
+    lh+='<div class="slide-thumb'+(i===cur?' active':'')+'" onclick="go('+i+')">🖼️ Slide '+(i+1)+'<br><small>'+SP.esc(s.title||'(no title)')+'</small></div>';
+  });
+  document.getElementById('slist').innerHTML=lh;
+  var s=slides[cur];
+  document.getElementById('sedit').innerHTML =
+    '<h3 style="margin-bottom:12px">Slide '+(cur+1)+'</h3>'
+    +'<input class="title" placeholder="Slide ka title..." value="'+SP.esc(s.title)+'" oninput="edT(this.value)">'
+    +'<textarea placeholder="Content likho..." oninput="edB(this.value)">'+SP.esc(s.body)+'</textarea>'
+    +(slides.length>1?'<div class="mt"><button class="btn btn-red btn-sm" onclick="delSlide()">🗑 Ye slide delete karo</button></div>':'');
+  check();
+}
+window.go=function(i){cur=i;render();};
+window.edT=function(v){slides[cur].title=v;paintList();check();};
+window.edB=function(v){slides[cur].body=v;};
+window.addSlide=function(){ if(slides.length>=10){alert('Max 10 slides!');return;} slides.push({title:'',body:''}); cur=slides.length-1; render(); };
+window.delSlide=function(){ if(slides.length<=1) return; slides.splice(cur,1); cur=Math.max(0,cur-1); render(); };
+function paintList(){
+  var lh='';
+  slides.forEach(function(s,i){
+    lh+='<div class="slide-thumb'+(i===cur?' active':'')+'" onclick="go('+i+')">🖼️ Slide '+(i+1)+'<br><small>'+SP.esc(s.title||'(no title)')+'</small></div>';
+  });
+  document.getElementById('slist').innerHTML=lh;
+}
+function check(){
+  var t0 = slides.length>=3;
+  var t1 = t0 && slides.every(function(s){return s.title.trim().length>0;});
+  [[t0],[t1]].forEach(function(pair,i){
+    var ok=pair[0], el=document.getElementById('t'+i);
+    el.classList.toggle('done',!!ok);
+    el.querySelector('.tick').textContent = ok?'✓':'';
+  });
+  return [t0,t1];
+}
+
+var iv=setInterval(function(){
+  left--; var t=document.getElementById('timer');
+  t.textContent=SP.fmtTime(left);
+  if(left<=120) t.classList.add('warn');
+  if(left<=0) finish();
+},1000);
+
+function finish(){
+  if(done) return; done=true; clearInterval(iv);
+  var tasks=check(), n=tasks.filter(Boolean).length;
+  var score=Math.round(n/tasks.length*100);
+  var prev=SP.getResult(me.id,'powerpoint')||{};
+  prev.practical={score:score, tasksDone:n, tasksTotal:tasks.length};
+  prev.practicalDone=true;
+  var parts=[];
+  if(prev.mcq && typeof prev.mcq.score==='number') parts.push(prev.mcq.score);
+  parts.push(score);
+  prev.total=Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length);
+  prev.passed=prev.total>=60;
+  SP.saveResult(me.id,'powerpoint',prev);
+  location.href='result.html?test=powerpoint';
+}
+render();
+</script>
+</body>
+</html>

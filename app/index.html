@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillProof — Academy ka certificate, ab QR-verified!</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof</div>
+    <div class="navlinks"><a href="verify.html">🔍 Verify Certificate</a></div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Academy ka certificate,<br><span class="hl">ab QR-verified!</span></h1>
+    <p>Computer academies ke liye online skill testing + verified certificates. Pehle <b>TEST</b>, phir <b>certificate</b>.</p>
+    <div class="login-grid">
+      <div class="login-card">
+        <h2>🎓 Student Login</h2>
+        <div class="sub">Apna test do, certificate pao!</div>
+        <div id="sErr"></div>
+        <div class="field"><label>Student ID</label><input id="sid" placeholder="e.g. demo123" autocomplete="username"></div>
+        <div class="field"><label>Password</label><input id="spw" type="password" placeholder="••••••" autocomplete="current-password"></div>
+        <button class="btn btn-blue btn-block" onclick="doStudent()">Login →</button>
+        <div class="demo-hint">🧪 Demo: ID <b>demo123</b> / Password <b>demo123</b></div>
+      </div>
+      <div class="login-card">
+        <h2>👨‍🏫 Teacher Login</h2>
+        <div class="sub">Students, results aur certificates dekho!</div>
+        <div id="tErr"></div>
+        <div class="field"><label>Email / ID</label><input id="tid" placeholder="e.g. admin"></div>
+        <div class="field"><label>Password</label><input id="tpw" type="password" placeholder="••••••"></div>
+        <button class="btn btn-green btn-block" onclick="doTeacher()">Login →</button>
+        <div class="demo-hint">🧪 Demo: ID <b>admin</b> / Password <b>admin123</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap page">
+  <div class="cards">
+    <div class="tcard"><div class="icon">⌨️</div><h3>Typing Test</h3><div class="ur">English + Urdu typing — WPM aur accuracy!</div></div>
+    <div class="tcard"><div class="icon">📝</div><h3>MS Word</h3><div class="ur">MCQ + practical editor test!</div></div>
+    <div class="tcard"><div class="icon">📊</div><h3>MS Excel</h3><div class="ur">Formulas + mini spreadsheet!</div></div>
+    <div class="tcard"><div class="icon">📅</div><h3>PowerPoint</h3><div class="ur">Slides banao, test do!</div></div>
+    <div class="tcard"><div class="icon">📰</div><h3>InPage</h3><div class="ur">Urdu composing ka test!</div></div>
+    <div class="tcard"><div class="icon">🎓</div><h3>QR Certificate</h3><div class="ur">Pass karo, verified certificate pao!</div></div>
+  </div>
+</section>
+
+<footer class="site"><div class="wrap">SkillProof © 2026 — Pehle TEST, phir certificate. 🇵🇰</div></footer>
+
+<script src="assets/js/common.js"></script>
+<script>
+function err(el,msg){ document.getElementById(el).innerHTML = msg ? '<div class="alert alert-err">'+msg+'</div>' : ''; }
+function doStudent(){
+  err('sErr','');
+  var s = SP.loginStudent(document.getElementById('sid').value, document.getElementById('spw').value);
+  if(s) location.href = 'student/dashboard.html';
+  else err('sErr','❌ Ghalat ID ya password!');
+}
+function doTeacher(){
+  err('tErr','');
+  var t = SP.loginTeacher(document.getElementById('tid').value, document.getElementById('tpw').value);
+  if(t) location.href = 'teacher/dashboard.html';
+  else err('tErr','❌ Ghalat ID ya password!');
+}
+document.getElementById('spw').addEventListener('keydown',function(e){ if(e.key==='Enter') doStudent(); });
+document.getElementById('tpw').addEventListener('keydown',function(e){ if(e.key==='Enter') doTeacher(); });
+</script>
+</body>
+</html>

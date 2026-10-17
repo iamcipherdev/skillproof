@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify Certificate — SkillProof</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof</div>
+    <div class="navlinks"><a href="index.html">Home</a></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="verify-card" id="out"><div class="big">🔍</div><p>Checking...</p></div>
+  <div class="verify-card" style="margin-top:18px;padding:28px">
+    <h3 style="margin-bottom:10px">Manual check</h3>
+    <div class="field"><input id="cid" placeholder="Certificate ID (e.g. SP-2026-12345)"></div>
+    <button class="btn btn-blue btn-block" onclick="manual()">Verify</button>
+  </div>
+</div>
+
+<footer class="site"><div class="wrap">SkillProof © 2026 — Pehle TEST, phir certificate.</div></footer>
+
+<script src="assets/js/common.js"></script>
+<script>
+function manual(){
+  var id = document.getElementById('cid').value.trim();
+  if(id) location.href = 'verify.html?id=' + encodeURIComponent(id);
+}
+function show(cert){
+  var ok = !!cert;
+  document.getElementById('out').innerHTML = ok
+    ? '<div class="big">✅</div><h2 style="color:var(--green)">Verified Certificate</h2>'
+      + '<div class="break mt" style="text-align:left">'
+      + brow('🎓 Student', cert.studentName)
+      + brow('📚 Course', cert.course)
+      + brow('🏫 Academy', cert.academy)
+      + brow('⭐ Score', cert.score + '%')
+      + brow('📅 Date', cert.date)
+      + brow('🆔 Cert ID', cert.id)
+      + '</div><p style="color:var(--muted);font-size:14px">Ye certificate SkillProof se verified hai.</p>'
+    : '<div class="big">❌</div><h2>Not Found</h2><p class="lede">Ye certificate ID hamare record mein nahi mili.<br>ID dobara check karo.</p>';
+}
+function brow(l,v){ return '<div class="brow"><span>'+l+'</span><b>'+SP.esc(v)+'</b></div>'; }
+
+var id = new URLSearchParams(location.search).get('id');
+if(id){
+  SP.getCert(id).then(show);
+} else {
+  document.getElementById('out').innerHTML = '<div class="big">🔍</div><h2>Verify Certificate</h2><p class="lede">QR scan karo ya neeche ID likho.</p>';
+}
+</script>
+</body>
+</html>

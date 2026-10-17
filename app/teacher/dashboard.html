@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Dashboard — SkillProof</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof <small style="font-size:13px;color:var(--muted)">Teacher</small></div>
+    <div class="navlinks"><a href="students.html">Students</a> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../index.html')">Logout</button></div>
+  </div>
+</header>
+
+<div class="wrap page">
+  <h1 id="hello">Dashboard 📊</h1>
+  <p class="lede">Students ke tests, scores aur certificates — sab ek jagah!</p>
+  <div class="stats" id="stats"></div>
+  <h2 style="margin:26px 0 14px">🕐 Recent Results</h2>
+  <div style="overflow-x:auto"><table class="data" id="recent"></table></div>
+</div>
+
+<footer class="site"><div class="wrap">SkillProof © 2026</div></footer>
+
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/questions.js"></script>
+<script>
+var me = SP.requireAuth('teacher','../index.html');
+if(me){
+  document.getElementById('hello').textContent = 'Assalam-o-Alaikum, ' + me.name + '! 📊';
+  var students = SP.students();
+  var results = JSON.parse(localStorage.getItem('sp_results')||'{}');
+  var certs = JSON.parse(localStorage.getItem('sp_certs')||'{}');
+
+  var tCount=0, sum=0, n=0;
+  var rows=[];
+  students.forEach(function(s){
+    var r = results[s.id]||{};
+    Object.keys(r).forEach(function(t){
+      tCount++;
+      if(typeof r[t].total==='number'){ sum+=r[t].total; n++; }
+      rows.push({s:s.name, t:(TEST_META[t]?TEST_META[t].name:t), score:r[t].total, pass:r[t].passed, d:r[t].updatedAt});
+    });
+  });
+  rows.sort(function(a,b){ return (b.d||'').localeCompare(a.d||''); });
+
+  document.getElementById('stats').innerHTML =
+    stat(students.length,'👥 Total Students')
+    + stat(tCount,'📝 Tests Completed')
+    + stat(n?Math.round(sum/n)+'%':'—','⭐ Average Score')
+    + stat(Object.keys(certs).length,'🎓 Certificates Issued');
+
+  var h='<tr><th>Student</th><th>Test</th><th>Score</th><th>Status</th><th>Date</th></tr>';
+  if(!rows.length) h+='<tr><td colspan="5" style="text-align:center;color:var(--muted)">Abhi koi test nahi hua. Students ko test dene ko kaho!</td></tr>';
+  rows.slice(0,15).forEach(function(x){
+    var d = x.d? x.d.slice(0,10) : '—';
+    h+='<tr><td>'+SP.esc(x.s)+'</td><td>'+SP.esc(x.t)+'</td><td><b>'+x.score+'%</b></td>'
+      +'<td>'+(x.pass?'<span class="status st-done">PASS</span>':'<span class="status st-prog">FAIL</span>')+'</td>'
+      +'<td>'+d+'</td></tr>';
+  });
+  document.getElementById('recent').innerHTML=h;
+}
+function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+</script>
+</body>
+</html>

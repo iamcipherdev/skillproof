@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MS Excel Practical — SkillProof</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof</div>
+    <div class="navlinks"><span id="tname"></span></div>
+  </div>
+</header>
+<div class="testbar"><div class="wrap">
+  <div><b>📊 MS Excel — Practical Test</b></div>
+  <div style="display:flex;gap:14px;align-items:center">
+    <button class="btn btn-ghost btn-sm no-print" onclick="AntiCheat.goFullscreen()">⛶ Fullscreen</button>
+    <div class="timer" id="timer">15:00</div>
+  </div>
+</div></div>
+
+<div class="wrap page">
+  <div class="warnbar" id="warn"></div>
+  <div class="wp-wrap">
+    <div>
+      <div class="xl-wrap">
+        <div class="formulabar">
+          <span class="fx">fx</span>
+          <input id="fx" placeholder="Cell select karo, phir yahan formula likho (e.g. =SUM(A1:A2))" onkeydown="if(event.key==='Enter')applyFx()">
+        </div>
+        <table class="sheet" id="sheet"></table>
+        <div class="mt" style="font-size:14px;color:var(--muted)">💡 Formulas: <b>=SUM(A1:A2)</b>, <b>=AVERAGE(A1:A3)</b>, <b>=A1+A2</b>, <b>=A1*2</b></div>
+      </div>
+      <div class="center mt"><button class="btn btn-green" onclick="finish()">✅ Submit Practical</button></div>
+    </div>
+    <div class="tasks">
+      <h3>📋 Tasks</h3>
+      <div class="task" id="t0"><span class="tick"></span><span><b>A1</b> mein <b>10</b> likho</span></div>
+      <div class="task" id="t1"><span class="tick"></span><span><b>A2</b> mein <b>20</b> likho</span></div>
+      <div class="task" id="t2"><span class="tick"></span><span><b>A3</b> mein formula <b>=SUM(A1:A2)</b> likho (jawab 30!)</span></div>
+      <div class="mt" style="font-size:13px;color:var(--muted)">Tasks khud tick honge! ✨</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/anticheat.js"></script>
+<script>
+var me = SP.requireAuth('student','../index.html');
+document.getElementById('tname').textContent = me ? me.name : '';
+var ROWS=5, COLS=5, COLS_L='ABCDE';
+var cells = {}; /* "A1" -> {raw, val} */
+var cur = 'A1';
+var done=false, left=15*60;
+
+AntiCheat.tabWatch({warnEl:'warn', max:3, onLock:finish});
+
+function build(){
+  var h='<tr><th></th>';
+  for(var c=0;c<COLS;c++) h+='<th>'+COLS_L[c]+'</th>';
+  h+='</tr>';
+  for(var r=1;r<=ROWS;r++){
+    h+='<tr><th>'+r+'</th>';
+    for(var c=0;c<COLS;c++){
+      var id=COLS_L[c]+r;
+      h+='<td data-id="'+id+'"><input id="c_'+id+'" onfocus="sel(\''+id+'\')" oninput="edit(\''+id+'\',this.value)"></td>';
+    }
+    h+='</tr>';
+  }
+  document.getElementById('sheet').innerHTML=h;
+}
+function sel(id){
+  cur=id;
+  document.querySelectorAll('table.sheet td').forEach(function(td){td.classList.remove('cur');});
+  var td=document.querySelector('td[data-id="'+id+'"]'); if(td) td.classList.add('cur');
+  document.getElementById('fx').value = (cells[id]&&cells[id].raw)||'';
+}
+function edit(id, v){ cells[id]={raw:v}; recalc(); check(); }
+function applyFx(){ var id=cur; cells[id]={raw:document.getElementById('fx').value}; var inp=document.getElementById('c_'+id); if(inp) inp.value=cells[id].raw; recalc(); check(); }
+window.sel=sel; window.edit=edit; window.applyFx=applyFx;
+
+function num(id){ var c=cells[id]; if(!c) return 0; var v=parseFloat(c.val!==undefined?c.val:c.raw); return isNaN(v)?0:v; }
+function rangeVals(a,b){
+  /* single column range like A1:A3 */
+  var col=a[0], r1=parseInt(a.slice(1)), r2=parseInt(b.slice(1)), out=[];
+  for(var r=Math.min(r1,r2); r<=Math.max(r1,r2); r++) out.push(num(col+r));
+  return out;
+}
+function evalFormula(raw){
+  if(!raw || raw[0]!=='=') return raw;
+  var f=raw.slice(1).toUpperCase().replace(/\s+/g,'');
+  var m;
+  if(m=f.match(/^SUM\(([A-E][1-5]):([A-E][1-5])\)$/)) return rangeVals(m[1],m[2]).reduce(function(a,b){return a+b;},0);
+  if(m=f.match(/^AVERAGE\(([A-E][1-5]):([A-E][1-5])\)$/)){ var v=rangeVals(m[1],m[2]); return v.length? v.reduce(function(a,b){return a+b;},0)/v.length : 0; }
+  /* arithmetic with cell refs */
+  try{
+    var expr=f.replace(/[A-E][1-5]/g,function(ref){return '('+num(ref)+')';});
+    if(!/^[0-9+\-*/().]+$/.test(expr)) return '#ERR';
+    var val=Function('"use strict";return ('+expr+')')();
+    return (typeof val==='number' && isFinite(val))? Math.round(val*100)/100 : '#ERR';
+  }catch(e){ return '#ERR'; }
+}
+function recalc(){
+  Object.keys(cells).forEach(function(id){
+    cells[id].val = evalFormula(cells[id].raw);
+  });
+}
+function check(){
+  var t0 = num('A1')===10, t1 = num('A2')===20;
+  var c3 = cells['A3'];
+  var t2 = t0 && t1 && c3 && /^=/.test(c3.raw||'') && Number(c3.val)===30;
+  [t0,t1,t2].forEach(function(ok,i){
+    var el=document.getElementById('t'+i);
+    el.classList.toggle('done',!!ok);
+    el.querySelector('.tick').textContent = ok?'✓':'';
+  });
+  return [t0,t1,t2];
+}
+
+var iv=setInterval(function(){
+  left--; var t=document.getElementById('timer');
+  t.textContent=SP.fmtTime(left);
+  if(left<=120) t.classList.add('warn');
+  if(left<=0) finish();
+},1000);
+
+function finish(){
+  if(done) return; done=true; clearInterval(iv);
+  var tasks=check(), n=tasks.filter(Boolean).length;
+  var score=Math.round(n/tasks.length*100);
+  var prev=SP.getResult(me.id,'excel')||{};
+  prev.practical={score:score, tasksDone:n, tasksTotal:tasks.length};
+  prev.practicalDone=true;
+  var parts=[];
+  if(prev.mcq && typeof prev.mcq.score==='number') parts.push(prev.mcq.score);
+  parts.push(score);
+  prev.total=Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length);
+  prev.passed=prev.total>=60;
+  SP.saveResult(me.id,'excel',prev);
+  location.href='result.html?test=excel';
+}
+build(); check();
+</script>
+</body>
+</html>

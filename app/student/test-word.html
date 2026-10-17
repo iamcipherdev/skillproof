@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MS Word Practical — SkillProof</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof</div>
+    <div class="navlinks"><span id="tname"></span></div>
+  </div>
+</header>
+<div class="testbar"><div class="wrap">
+  <div><b>📝 MS Word — Practical Test</b></div>
+  <div style="display:flex;gap:14px;align-items:center">
+    <button class="btn btn-ghost btn-sm no-print" onclick="AntiCheat.goFullscreen()">⛶ Fullscreen</button>
+    <div class="timer" id="timer">15:00</div>
+  </div>
+</div></div>
+
+<div class="wrap page">
+  <div class="warnbar" id="warn"></div>
+  <div class="wp-wrap">
+    <div>
+      <div class="toolbar">
+        <button onclick="cmd('bold')"><b>B</b></button>
+        <button onclick="cmd('italic')"><i>I</i></button>
+        <button onclick="cmd('underline')"><u>U</u></button>
+        <button onclick="cmd('formatBlock','H1')">H1</button>
+        <button onclick="cmd('formatBlock','H2')">H2</button>
+        <button onclick="insertTable()">📊 Table</button>
+        <button onclick="clearEd()">🗑 Clear</button>
+      </div>
+      <div id="editor" contenteditable="true"><p>Yahan likho...<br><br>Pehle <b>Heading</b> lagao "My Document", phir koi line <b>BOLD</b> karo, aur aakhir mein <b>3x3 table</b> banao!</p></div>
+      <div class="center mt"><button class="btn btn-green" onclick="finish()">✅ Submit Practical</button></div>
+    </div>
+    <div class="tasks">
+      <h3>📋 Tasks</h3>
+      <div class="task" id="t0"><span class="tick"></span><span>Heading lagao <b>"My Document"</b> (H1)</span></div>
+      <div class="task" id="t1"><span class="tick"></span><span>Koi line <b>BOLD</b> karo</span></div>
+      <div class="task" id="t2"><span class="tick"></span><span><b>Table</b> banao (kam se kam 2x2)</span></div>
+      <div class="mt" style="font-size:13px;color:var(--muted)">Tasks khud tick honge jab sahi karoge! ✨</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/anticheat.js"></script>
+<script>
+var me = SP.requireAuth('student','../index.html');
+document.getElementById('tname').textContent = me ? me.name : '';
+var ed = document.getElementById('editor');
+var done=false, left=15*60;
+
+AntiCheat.tabWatch({warnEl:'warn', max:3, onLock:finish});
+
+function cmd(c, v){ document.execCommand(c, false, v||null); ed.focus(); check(); }
+function insertTable(){
+  var h='<table border="1" style="border-collapse:collapse;margin:10px 0">';
+  for(var r=0;r<3;r++){ h+='<tr>'; for(var c=0;c<3;c++) h+='<td style="padding:8px 16px">&nbsp;</td>'; h+='</tr>'; }
+  h+='</table><p><br></p>';
+  document.execCommand('insertHTML', false, h); check();
+}
+function clearEd(){ if(confirm('Saaf kar dun?')){ ed.innerHTML='<p><br></p>'; check(); } }
+
+function hasHeading(){
+  var hs = ed.querySelectorAll('h1,h2');
+  for(var i=0;i<hs.length;i++) if(/my document/i.test(hs[i].textContent)) return true;
+  return false;
+}
+function hasBold(){ return ed.querySelector('b,strong') !== null; }
+function hasTable(){
+  var t = ed.querySelector('table');
+  if(!t) return false;
+  var rows = t.querySelectorAll('tr');
+  return rows.length>=2;
+}
+function check(){
+  var tasks = [hasHeading(), hasBold(), hasTable()];
+  tasks.forEach(function(ok,i){
+    var el = document.getElementById('t'+i);
+    el.classList.toggle('done', ok);
+    el.querySelector('.tick').textContent = ok ? '✓' : '';
+  });
+  return tasks;
+}
+ed.addEventListener('input', check);
+
+var iv = setInterval(function(){
+  left--;
+  var t = document.getElementById('timer');
+  t.textContent = SP.fmtTime(left);
+  if(left<=120) t.classList.add('warn');
+  if(left<=0) finish();
+},1000);
+
+function finish(){
+  if(done) return; done=true; clearInterval(iv);
+  var tasks = check();
+  var n = tasks.filter(Boolean).length;
+  var score = Math.round(n/tasks.length*100);
+  var prev = SP.getResult(me.id,'word') || {};
+  prev.practical = {score:score, tasksDone:n, tasksTotal:tasks.length};
+  prev.practicalDone = true;
+  var parts=[];
+  if(prev.mcq && typeof prev.mcq.score==='number') parts.push(prev.mcq.score);
+  parts.push(score);
+  prev.total = Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length);
+  prev.passed = prev.total>=60;
+  SP.saveResult(me.id,'word',prev);
+  location.href = 'result.html?test=word';
+}
+check();
+</script>
+</body>
+</html>

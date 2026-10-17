@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Test — SkillProof</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof</div>
+    <div class="navlinks"><span id="tname"></span></div>
+  </div>
+</header>
+<div class="testbar"><div class="wrap">
+  <div><b id="title">⌨️ Typing Test</b></div>
+  <div class="timer" id="timer">03:00</div>
+</div></div>
+
+<div class="wrap page narrow">
+  <div class="warnbar" id="warn"></div>
+  <p class="lede" id="instr">Neeche wala paragraph <b>khud type</b> karo. Paste mana hai! ⛔</p>
+  <div class="typestats">
+    <div>WPM<br><b id="wpm">0</b></div>
+    <div>Accuracy<br><b id="acc">100%</b></div>
+    <div>Chars<br><b id="chars">0</b></div>
+  </div>
+  <div class="typeref" id="ref"></div>
+  <textarea id="typeInput" placeholder="Yahan type karo..." disabled></textarea>
+  <div class="center mt">
+    <button class="btn btn-blue" id="startBtn">▶ Start Test</button>
+    <button class="btn btn-green" id="doneBtn" style="display:none">✅ Khatam</button>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/anticheat.js"></script>
+<script>
+var me = SP.requireAuth('student','../index.html');
+var params = new URLSearchParams(location.search);
+var lang = params.get('lang') || 'en';
+var isUr = lang === 'ur';
+
+var TEXT_EN = "Computer is the most important invention of our time. Every office, school and home uses a computer today. Learning to type fast and correctly is a very useful skill for every student. Practice daily for a few minutes and your typing speed will improve quickly. Hard work always brings success in life, so never give up and keep learning new things every day.";
+var TEXT_UR = "کمپیوٹر آج کے دور کی سب سے اہم ایجاد ہے۔ ہر دفتر، اسکول اور گھر میں کمپیوٹر استعمال ہوتا ہے۔ اردو ٹائپنگ سیکھنا بھی بہت ضروری ہے کیونکہ اردو ہماری قومی زبان ہے۔ ان پیج سافٹ ویئر میں اردو لکھنا بہت آسان ہے۔ محنت اور لگن سے انسان ہر منزل حاصل کر سکتا ہے۔ روزانہ تھوڑی مشق سے آپ کی رفتار بڑھ جائے گی۔";
+
+var target = isUr ? TEXT_UR : TEXT_EN;
+document.getElementById('title').textContent = isUr ? '⌨️ Urdu Typing Test' : '⌨️ English Typing Test';
+document.getElementById('tname').textContent = me ? me.name : '';
+if(isUr){ document.getElementById('ref').setAttribute('dir','rtl'); document.getElementById('typeInput').setAttribute('dir','rtl'); }
+
+var ref = document.getElementById('ref'), input = document.getElementById('typeInput');
+var started=false, startT=0, done=false, TOTAL=180, left=TOTAL, iv=null;
+
+AntiCheat.tabWatch({warnEl:'warn', max:3, onLock:finish});
+AntiCheat.noPaste(input, 'warn');
+
+function paint(){
+  var typed = input.value, h='';
+  for(var i=0;i<target.length;i++){
+    var cls='';
+    if(i<typed.length) cls = typed[i]===target[i] ? 'ok' : 'bad';
+    else if(i===typed.length) cls='cur';
+    var ch = target[i]===' ' ? '&nbsp;' : SP.esc(target[i]);
+    h += '<span class="'+cls+'">'+ch+'</span>';
+  }
+  ref.innerHTML = h;
+}
+function stats(){
+  var typed = input.value, correct=0;
+  for(var i=0;i<typed.length && i<target.length;i++) if(typed[i]===target[i]) correct++;
+  var mins = Math.max((Date.now()-startT)/60000, 1/60);
+  var words = typed.trim()? typed.trim().split(/\s+/).length : 0;
+  var wpm = started? Math.round(words/mins) : 0;
+  var acc = typed.length? Math.round(correct/typed.length*100) : 100;
+  document.getElementById('wpm').textContent = wpm;
+  document.getElementById('acc').textContent = acc+'%';
+  document.getElementById('chars').textContent = typed.length;
+  return {wpm:wpm, acc:acc};
+}
+input.addEventListener('input', function(){ paint(); stats(); });
+document.getElementById('startBtn').onclick = function(){
+  started=true; startT=Date.now(); input.disabled=false; input.focus();
+  this.style.display='none'; document.getElementById('doneBtn').style.display='inline-block';
+  iv=setInterval(function(){
+    left--; document.getElementById('timer').textContent = SP.fmtTime(left);
+    if(left<=30) document.getElementById('timer').classList.add('warn');
+    if(left<=0) finish();
+  },1000);
+};
+document.getElementById('doneBtn').onclick = finish;
+
+function finish(){
+  if(done) return; done=true; clearInterval(iv); input.disabled=true;
+  var s = stats();
+  var score = Math.min(100, Math.round(s.wpm*3*(s.acc/100)));
+  var testId = isUr ? 'inpage' : 'typing';
+  var prev = SP.getResult(me.id, testId) || {};
+  prev.typing = {wpm:s.wpm, accuracy:s.acc, score:score};
+  if(isUr) prev.typingDone = true;
+  var parts=[];
+  if(prev.mcq && typeof prev.mcq.score==='number') parts.push(prev.mcq.score);
+  if(prev.practical && typeof prev.practical.score==='number') parts.push(prev.practical.score);
+  parts.push(score);
+  prev.total = Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length);
+  prev.passed = prev.total>=60;
+  SP.saveResult(me.id, testId, prev);
+  location.href = 'result.html?test='+testId;
+}
+paint();
+</script>
+</body>
+</html>

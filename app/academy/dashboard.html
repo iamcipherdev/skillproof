@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academy Dashboard — SkillProof</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof <small>ACADEMY</small></div>
+    <div class="navlinks"><span id="who"></span> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../index.html')">Logout</button></div>
+  </div>
+</header>
+
+<div class="wrap page">
+  <div class="acad-layout">
+    <nav class="acad-nav">
+      <a href="dashboard.html" class="active">📊 Dashboard</a>
+      <a href="profile.html">🏫 Academy Profile</a>
+      <a href="certificate-design.html">🎨 Certificate Design</a>
+      <a href="teachers.html">👨‍🏫 Teachers</a>
+    </nav>
+    <div>
+      <h1 id="hello">Dashboard 📊</h1>
+      <p class="lede">Aapki academy ka poora hisaab — ek nazar mein!</p>
+      <div class="stats" id="stats"></div>
+      <h2 class="section-title">🎓 Haal hi mein jaari certificates</h2>
+      <div style="overflow-x:auto"><table class="data" id="certs"></table></div>
+    </div>
+  </div>
+</div>
+
+<footer class="site"><div class="wrap">SkillProof © 2026</div></footer>
+
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/questions.js"></script>
+<script>
+var me = SP.requireAuth('academy','../academy-login.html');
+if(me){
+  var prof = SP.getAcademyProfile();
+  document.getElementById('hello').textContent = 'Assalam-o-Alaikum, ' + (prof.name||me.name) + '! 📊';
+  document.getElementById('who').textContent = me.name;
+
+  var students = SP.students();
+  var teachers = SP.teachers();
+  var results = JSON.parse(localStorage.getItem('sp_results')||'{}');
+  var certs = JSON.parse(localStorage.getItem('sp_certs')||'{}');
+
+  var tCount=0, sum=0, n=0;
+  students.forEach(function(s){
+    var r = results[s.id]||{};
+    Object.keys(r).forEach(function(t){
+      tCount++;
+      if(typeof r[t].total==='number'){ sum+=r[t].total; n++; }
+    });
+  });
+  var certList = Object.values(certs).sort(function(a,b){ return (b.issuedAt||'').localeCompare(a.issuedAt||''); });
+
+  function stat(n,l,cls){ return '<div class="stat '+(cls||'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+  document.getElementById('stats').innerHTML =
+    stat(students.length,'👥 Total Students','navy')
+    + stat(teachers.length,'👨‍🏫 Teachers','blue')
+    + stat(tCount,'📝 Tests Completed')
+    + stat(n?Math.round(sum/n)+'%':'—','⭐ Average Score')
+    + stat(certList.length,'🎓 Certificates Issued');
+
+  var h='<tr><th>Student</th><th>Course</th><th>Score</th><th>Cert ID</th><th>Date</th></tr>';
+  if(!certList.length) h+='<tr><td colspan="5" style="text-align:center;color:var(--muted)">Abhi koi certificate jaari nahi hua.</td></tr>';
+  certList.slice(0,12).forEach(function(c){
+    h+='<tr><td>'+SP.esc(c.studentName)+'</td><td>'+SP.esc(c.course)+'</td><td><b>'+c.score+'%</b></td>'
+      +'<td style="font-family:monospace">'+SP.esc(c.id)+'</td><td>'+SP.esc(c.date||'—')+'</td></tr>';
+  });
+  document.getElementById('certs').innerHTML=h;
+}
+</script>
+</body>
+</html>

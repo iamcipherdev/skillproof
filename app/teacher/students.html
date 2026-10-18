@@ -9,8 +9,8 @@
 <body>
 <header class="topbar">
   <div class="wrap">
-    <div class="brand"><span class="logo">S</span> SkillProof <small style="font-size:13px;color:var(--muted)">Teacher</small></div>
-    <div class="navlinks"><a href="dashboard.html">Dashboard</a> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../index.html')">Logout</button></div>
+    <div class="brand"><span class="logo">S</span> SkillProof <small>TEACHER</small></div>
+    <div class="navlinks"><a href="dashboard.html">Dashboard</a> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../teacher-login.html')">Logout</button></div>
   </div>
 </header>
 
@@ -35,7 +35,7 @@
 <script src="../assets/js/common.js"></script>
 <script src="../assets/js/questions.js"></script>
 <script>
-var me = SP.requireAuth('teacher','../index.html');
+var me = SP.requireAuth('teacher','../teacher-login.html');
 function render(){
   var students = SP.students();
   var results = JSON.parse(localStorage.getItem('sp_results')||'{}');

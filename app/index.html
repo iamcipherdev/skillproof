@@ -10,67 +10,50 @@
 <header class="topbar">
   <div class="wrap">
     <div class="brand"><span class="logo">S</span> SkillProof</div>
-    <div class="navlinks"><a href="verify.html">🔍 Verify Certificate</a></div>
+    <div class="navlinks"><a href="verify.html">🔍 Certificate Verify Karo</a></div>
   </div>
 </header>
 
 <section class="hero">
   <div class="wrap">
+    <div class="kicker">🎓 COMPUTER ACADEMIES KE LIYE</div>
     <h1>Academy ka certificate,<br><span class="hl">ab QR-verified!</span></h1>
-    <p>Computer academies ke liye online skill testing + verified certificates. Pehle <b>TEST</b>, phir <b>certificate</b>.</p>
-    <div class="login-grid">
-      <div class="login-card">
-        <h2>🎓 Student Login</h2>
-        <div class="sub">Apna test do, certificate pao!</div>
-        <div id="sErr"></div>
-        <div class="field"><label>Student ID</label><input id="sid" placeholder="e.g. demo123" autocomplete="username"></div>
-        <div class="field"><label>Password</label><input id="spw" type="password" placeholder="••••••" autocomplete="current-password"></div>
-        <button class="btn btn-blue btn-block" onclick="doStudent()">Login →</button>
-        <div class="demo-hint">🧪 Demo: ID <b>demo123</b> / Password <b>demo123</b></div>
-      </div>
-      <div class="login-card">
-        <h2>👨‍🏫 Teacher Login</h2>
-        <div class="sub">Students, results aur certificates dekho!</div>
-        <div id="tErr"></div>
-        <div class="field"><label>Email / ID</label><input id="tid" placeholder="e.g. admin"></div>
-        <div class="field"><label>Password</label><input id="tpw" type="password" placeholder="••••••"></div>
-        <button class="btn btn-green btn-block" onclick="doTeacher()">Login →</button>
-        <div class="demo-hint">🧪 Demo: ID <b>admin</b> / Password <b>admin123</b></div>
-      </div>
+    <p>Online skill testing + verified certificates. Pehle <b>TEST</b>, phir <b>certificate</b> — sab kuch ek jagah.</p>
+    <div class="role-cards">
+      <a class="role-card" href="student-login.html">
+        <div class="ric">🎓</div>
+        <h2>Student</h2>
+        <p>Apna test do — typing, Word, Excel, PowerPoint, InPage. Pass karo, certificate pao!</p>
+        <div class="go">Student Login →</div>
+      </a>
+      <a class="role-card" href="teacher-login.html">
+        <div class="ric">👨‍🏫</div>
+        <h2>Teacher</h2>
+        <p>Students, test results aur certificates — sab kuch ek dashboard mein dekho.</p>
+        <div class="go">Teacher Login →</div>
+      </a>
+      <a class="role-card" href="academy-login.html">
+        <div class="ric">🏫</div>
+        <h2>Academy</h2>
+        <p>Apni academy manage karo — teachers, branding aur certificate design customize karo.</p>
+        <div class="go">Academy Login →</div>
+      </a>
     </div>
   </div>
 </section>
 
-<section class="wrap page">
-  <div class="cards">
-    <div class="tcard"><div class="icon">⌨️</div><h3>Typing Test</h3><div class="ur">English + Urdu typing — WPM aur accuracy!</div></div>
-    <div class="tcard"><div class="icon">📝</div><h3>MS Word</h3><div class="ur">MCQ + practical editor test!</div></div>
-    <div class="tcard"><div class="icon">📊</div><h3>MS Excel</h3><div class="ur">Formulas + mini spreadsheet!</div></div>
-    <div class="tcard"><div class="icon">📅</div><h3>PowerPoint</h3><div class="ur">Slides banao, test do!</div></div>
-    <div class="tcard"><div class="icon">📰</div><h3>InPage</h3><div class="ur">Urdu composing ka test!</div></div>
-    <div class="tcard"><div class="icon">🎓</div><h3>QR Certificate</h3><div class="ur">Pass karo, verified certificate pao!</div></div>
+<section class="feat-band">
+  <div class="wrap">
+    <h2>Kyun SkillProof? 💪</h2>
+    <div class="feat-grid">
+      <div class="feat"><div class="fic">⌨️</div><h3>Practical Tests</h3><p>MCQ ke saath asli practical — Word editor, Excel sheet, PowerPoint slides, typing.</p></div>
+      <div class="feat"><div class="fic">🎓</div><h3>QR-Verified Certificates</h3><p>Har certificate QR-verified. Employer scan kare, foran bharosa!</p></div>
+      <div class="feat"><div class="fic">🛡️</div><h3>Anti-Cheat</h3><p>Timer, fullscreen, tab-switch detection — cheating mushkil, seekhna aasaan.</p></div>
+      <div class="feat"><div class="fic">🎨</div><h3>Apni Branding</h3><p>Har academy apna logo, rang aur design lagaye — certificate par uski pehchan.</p></div>
+    </div>
   </div>
 </section>
 
 <footer class="site"><div class="wrap">SkillProof © 2026 — Pehle TEST, phir certificate. 🇵🇰</div></footer>
-
-<script src="assets/js/common.js"></script>
-<script>
-function err(el,msg){ document.getElementById(el).innerHTML = msg ? '<div class="alert alert-err">'+msg+'</div>' : ''; }
-function doStudent(){
-  err('sErr','');
-  var s = SP.loginStudent(document.getElementById('sid').value, document.getElementById('spw').value);
-  if(s) location.href = 'student/dashboard.html';
-  else err('sErr','❌ Ghalat ID ya password!');
-}
-function doTeacher(){
-  err('tErr','');
-  var t = SP.loginTeacher(document.getElementById('tid').value, document.getElementById('tpw').value);
-  if(t) location.href = 'teacher/dashboard.html';
-  else err('tErr','❌ Ghalat ID ya password!');
-}
-document.getElementById('spw').addEventListener('keydown',function(e){ if(e.key==='Enter') doStudent(); });
-document.getElementById('tpw').addEventListener('keydown',function(e){ if(e.key==='Enter') doTeacher(); });
-</script>
 </body>
 </html>

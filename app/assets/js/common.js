@@ -13,10 +13,18 @@
     {id:'demo123', password:'demo123', name:'Demo Student', academy:'Roots Academy'}
   ];
   var DEMO_TEACHER = {id:'admin', password:'admin123', name:'Admin Teacher', academy:'Roots Academy'};
+  var DEMO_ACADEMY = {id:'academy', password:'academy123', name:'Roots Academy', email:'academy'};
+
+  var DEFAULT_ACADEMY = {name:'Roots Academy', email:'', logo:'', address:'', phone:''};
+  var DEFAULT_DESIGN = {theme:'gold', template:'classic', directorName:'', directorTitle:'Director', showScore:true, tagline:'Pehle TEST, phir certificate.'};
 
   function allStudents(){
     var custom = LS.get('students', []);
     return DEMO_STUDENTS.concat(custom);
+  }
+  function allTeachers(){
+    var custom = LS.get('teachers', []);
+    return [DEMO_TEACHER].concat(custom);
   }
 
   function rtdbPut(path, data){
@@ -39,9 +47,20 @@
     },
     loginTeacher: function(id, pw){
       id = String(id||'').trim(); pw = String(pw||'').trim();
-      if(id===DEMO_TEACHER.id && pw===DEMO_TEACHER.password){
-        LS.set('session', {role:'teacher', id:id, name:DEMO_TEACHER.name, academy:DEMO_TEACHER.academy});
-        return DEMO_TEACHER;
+      var t = allTeachers().find(function(x){ return x.id===id && x.password===pw; });
+      if(t){
+        LS.set('session', {role:'teacher', id:t.id, name:t.name, academy:t.academy});
+        return t;
+      }
+      return null;
+    },
+    loginAcademy: function(id, pw){
+      id = String(id||'').trim(); pw = String(pw||'').trim();
+      var prof = api.getAcademyProfile();
+      var okId = (id===DEMO_ACADEMY.id || (prof.email && id===prof.email));
+      if(okId && pw===DEMO_ACADEMY.password){
+        LS.set('session', {role:'academy', id:id, name:prof.name||DEMO_ACADEMY.name, academy:prof.name||DEMO_ACADEMY.name});
+        return DEMO_ACADEMY;
       }
       return null;
     },
@@ -62,6 +81,41 @@
       LS.set('students', custom);
       rtdbPut('/skillproof/students/'+encodeURIComponent(id), {name:name, academy:'Roots Academy'});
       return {ok:true};
+    },
+
+    /* ---------- teachers (academy-managed) ---------- */
+    teachers: allTeachers,
+    addTeacher: function(name, id, password){
+      var custom = LS.get('teachers', []);
+      if(allTeachers().some(function(x){ return x.id===id; })) return {error:'Ye ID pehle se hai!'};
+      custom.push({id:id, password:password, name:name, academy:'Roots Academy'});
+      LS.set('teachers', custom);
+      rtdbPut('/skillproof/teachers/'+encodeURIComponent(id), {name:name});
+      return {ok:true};
+    },
+    removeTeacher: function(id){
+      var custom = LS.get('teachers', []).filter(function(x){ return x.id!==id; });
+      LS.set('teachers', custom);
+      return {ok:true};
+    },
+
+    /* ---------- academy profile + certificate design ---------- */
+    getAcademyProfile: function(){
+      var p = LS.get('academy', {});
+      return Object.assign({}, DEFAULT_ACADEMY, p);
+    },
+    saveAcademyProfile: function(p){
+      LS.set('academy', p);
+      rtdbPut('/skillproof/academy/profile', {name:p.name, address:p.address, phone:p.phone});
+    },
+    getCertDesign: function(){
+      var d = LS.get('certdesign', {});
+      return Object.assign({}, DEFAULT_DESIGN, d);
+    },
+    saveCertDesign: function(d){
+      LS.set('certdesign', d);
+      var slim = Object.assign({}, d); delete slim.logo;
+      rtdbPut('/skillproof/academy/certdesign', slim);
     },
 
     /* ---------- results ---------- */
@@ -104,6 +158,32 @@
       var local = api.getCertLocal(id);
       if(local) return Promise.resolve(local);
       return rtdbGet('/skillproof/certificates/'+encodeURIComponent(id));
+    },
+
+    /* ---------- certificate HTML renderer (shared) ---------- */
+    certHTML: function(cert, design, profile, verifyUrl){
+      design = design || api.getCertDesign();
+      profile = profile || api.getAcademyProfile();
+      var qr = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(verifyUrl);
+      var logo = profile.logo ? '<img class="clogo" src="'+profile.logo+'" alt="logo">' : '';
+      var sigName = design.directorName ? '<b>'+api.esc(design.directorName)+'</b><br>'+api.esc(design.directorTitle||'') : 'Authorized<br><b>'+api.esc(profile.name||'SkillProof')+'</b>';
+      var scoreLine = design.showScore === false ? '' : '<div class="meta"><b>'+cert.score+'%</b> score ke saath</div>';
+      return '<div class="cert cert-theme-'+design.theme+' cert-tpl-'+design.template+'">'
+        + logo
+        + '<div class="orn">✦ '+api.esc(profile.name||'SkillProof')+' ✦</div>'
+        + '<h1>Certificate</h1>'
+        + '<div class="ofline">OF ACHIEVEMENT</div>'
+        + '<div class="meta" style="margin-top:20px">Ye certificate diya jata hai</div>'
+        + '<div class="rname">'+api.esc(cert.studentName)+'</div>'
+        + '<div class="meta"><b>'+api.esc(cert.course)+'</b> course mukammal karne par</div>'
+        + scoreLine
+        + '<div class="meta">'+api.esc(profile.name||cert.academy||'')+' — '+api.esc(cert.date)+'</div>'
+        + '<div class="cid">'+api.esc(cert.id)+'</div>'
+        + '<div class="qrrow">'
+        +   '<div class="sig">'+sigName+'</div>'
+        +   '<div style="text-align:center"><img src="'+qr+'" alt="QR" width="140" height="140"><div class="sig">Scan karke verify karo</div></div>'
+        + '</div>'
+        + '</div>';
     },
 
     /* ---------- utils ---------- */

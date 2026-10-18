@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academy Profile — SkillProof</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof <small>ACADEMY</small></div>
+    <div class="navlinks"><button class="btn btn-ghost btn-sm" onclick="SP.logout('../index.html')">Logout</button></div>
+  </div>
+</header>
+
+<div class="wrap page">
+  <div class="acad-layout">
+    <nav class="acad-nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="profile.html" class="active">🏫 Academy Profile</a>
+      <a href="certificate-design.html">🎨 Certificate Design</a>
+      <a href="teachers.html">👨‍🏫 Teachers</a>
+    </nav>
+    <div class="panel">
+      <h2>🏫 Academy Profile</h2>
+      <p class="lede">Ye maloomat certificates aur verification page par dikhegi.</p>
+      <div id="msg"></div>
+      <div class="grid2">
+        <div class="field"><label>Academy ka naam *</label><input id="aname" placeholder="e.g. Roots Academy"></div>
+        <div class="field"><label>Login Email</label><input id="aemail" placeholder="e.g. roots@gmail.com"><div class="hint">Is email se bhi login ho sakta hai</div></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Phone</label><input id="aphone" placeholder="e.g. 0323-1234567"></div>
+        <div class="field"><label>Address</label><input id="aaddr" placeholder="e.g. College Road, Daska"></div>
+      </div>
+      <div class="field">
+        <label>Academy Logo</label>
+        <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+          <div class="logo-preview" id="logoPrev">Koi logo nahi</div>
+          <div>
+            <input type="file" id="logoFile" accept="image/*" style="margin-bottom:8px">
+            <div class="hint">PNG/JPG — khud chhota ho jayega. Certificate par dikhega!</div>
+            <div><button class="btn btn-ghost btn-sm mt" onclick="clearLogo()">🗑️ Logo hatao</button></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-green btn-lg" onclick="save()">💾 Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<footer class="site"><div class="wrap">SkillProof © 2026</div></footer>
+
+<script src="../assets/js/common.js"></script>
+<script>
+SP.requireAuth('academy','../academy-login.html');
+var prof = SP.getAcademyProfile();
+document.getElementById('aname').value = prof.name||'';
+document.getElementById('aemail').value = prof.email||'';
+document.getElementById('aphone').value = prof.phone||'';
+document.getElementById('aaddr').value = prof.address||'';
+if(prof.logo) document.getElementById('logoPrev').innerHTML = '<img src="'+prof.logo+'">';
+
+document.getElementById('logoFile').addEventListener('change', function(e){
+  var f = e.target.files[0];
+  if(!f) return;
+  var img = new Image();
+  img.onload = function(){
+    /* downscale to max 400px to keep localStorage small */
+    var max = 400, w = img.width, h = img.height;
+    if(w > max){ h = Math.round(h*max/w); w = max; }
+    var c = document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    prof.logo = c.toDataURL('image/png');
+    document.getElementById('logoPrev').innerHTML = '<img src="'+prof.logo+'">';
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(f);
+});
+function clearLogo(){
+  prof.logo = '';
+  document.getElementById('logoPrev').textContent = 'Koi logo nahi';
+  document.getElementById('logoFile').value = '';
+}
+function save(){
+  var name = document.getElementById('aname').value.trim();
+  if(!name){ document.getElementById('msg').innerHTML='<div class="alert alert-err">❌ Academy ka naam zaroori hai!</div>'; return; }
+  prof.name = name;
+  prof.email = document.getElementById('aemail').value.trim();
+  prof.phone = document.getElementById('aphone').value.trim();
+  prof.address = document.getElementById('aaddr').value.trim();
+  SP.saveAcademyProfile(prof);
+  document.getElementById('msg').innerHTML='<div class="alert alert-ok">✅ Profile save ho gaya!</div>';
+  setTimeout(function(){ document.getElementById('msg').innerHTML=''; }, 3000);
+}
+</script>
+</body>
+</html>

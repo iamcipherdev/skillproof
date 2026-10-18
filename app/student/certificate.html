@@ -10,31 +10,34 @@
 <header class="topbar no-print">
   <div class="wrap">
     <div class="brand"><span class="logo">S</span> SkillProof</div>
-    <div class="navlinks"><a href="dashboard.html">Dashboard</a> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../index.html')">Logout</button></div>
+    <div class="navlinks"><a href="dashboard.html">Dashboard</a> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../student-login.html')">Logout</button></div>
   </div>
 </header>
 
 <div class="wrap page">
   <div id="out"></div>
   <div class="cert-actions no-print">
-    <button class="btn btn-blue" onclick="window.print()">🖨️ Print / Save PDF</button>
+    <button class="btn btn-green btn-lg" onclick="window.print()">🖨️ Print / Save PDF</button>
     <a class="btn btn-ghost" href="dashboard.html">← Dashboard</a>
   </div>
 </div>
 
+<footer class="site no-print"><div class="wrap">SkillProof © 2026</div></footer>
+
 <script src="../assets/js/common.js"></script>
 <script src="../assets/js/questions.js"></script>
 <script>
-var me = SP.requireAuth('student','../index.html');
+var me = SP.requireAuth('student','../student-login.html');
 var params = new URLSearchParams(location.search);
 var testId = params.get('test') || 'word';
 var meta = TEST_META[testId] || TEST_META.word;
 var r = SP.getResult(me.id, testId);
 
-if(!r || !r.passed){
-  document.getElementById('out').innerHTML = '<div class="alert alert-err">❌ Certificate sirf PASS hone par milta hai! Pehle test pass karo (60%+).</div><div class="center"><a class="btn btn-blue" href="dashboard.html">Dashboard</a></div>';
+if(!me){
+  /* requireAuth already redirected */
+} else if(!r || !r.passed){
+  document.getElementById('out').innerHTML = '<div class="alert alert-err">❌ Certificate sirf PASS hone par milta hai! Pehle test pass karo (60%+).</div><div class="center"><a class="btn btn-green" href="dashboard.html">Dashboard</a></div>';
 } else {
-  /* reuse existing cert for this test if present, else create */
   var certs = Object.values(JSON.parse(localStorage.getItem('sp_certs')||'{}'));
   var cert = certs.find(function(c){ return c.studentId===me.id && c.test===testId; });
   if(!cert){
@@ -51,22 +54,7 @@ if(!r || !r.passed){
     SP.saveCert(cert);
   }
   var verifyUrl = location.origin + location.pathname.replace(/student\/certificate\.html.*$/,'') + 'verify.html?id=' + cert.id;
-  var qr = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(verifyUrl);
-  document.getElementById('out').innerHTML =
-    '<div class="cert">'
-    + '<div class="orn">✦ SkillProof ✦</div>'
-    + '<h1>Certificate</h1>'
-    + '<div style="letter-spacing:4px;color:#b45309;font-size:15px">OF ACHIEVEMENT</div>'
-    + '<div class="meta" style="margin-top:22px">Ye certificate diya jata hai</div>'
-    + '<div class="rname">'+SP.esc(cert.studentName)+'</div>'
-    + '<div class="meta">ko <b>'+SP.esc(cert.course)+'</b> mein <b>'+cert.score+'%</b> score par</div>'
-    + '<div class="meta">'+SP.esc(cert.academy)+' — '+SP.esc(cert.date)+'</div>'
-    + '<div class="cid">'+cert.id+'</div>'
-    + '<div class="qrrow">'
-    +   '<div class="sig">Authorized<br><b>SkillProof</b></div>'
-    +   '<div style="text-align:center"><img src="'+qr+'" alt="QR" width="140" height="140"><div class="sig">Scan karke verify karo</div></div>'
-    + '</div>'
-    + '</div>';
+  document.getElementById('out').innerHTML = SP.certHTML(cert, SP.getCertDesign(), SP.getAcademyProfile(), verifyUrl);
 }
 </script>
 </body>

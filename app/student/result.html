@@ -10,7 +10,7 @@
 <header class="topbar">
   <div class="wrap">
     <div class="brand"><span class="logo">S</span> SkillProof</div>
-    <div class="navlinks"><a href="dashboard.html">Dashboard</a> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../index.html')">Logout</button></div>
+    <div class="navlinks"><a href="dashboard.html">Dashboard</a> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../student-login.html')">Logout</button></div>
   </div>
 </header>
 
@@ -23,7 +23,7 @@
 <script src="../assets/js/common.js"></script>
 <script src="../assets/js/questions.js"></script>
 <script>
-var me = SP.requireAuth('student','../index.html');
+var me = SP.requireAuth('student','../student-login.html');
 var params = new URLSearchParams(location.search);
 var testId = params.get('test') || 'word';
 var meta = TEST_META[testId] || TEST_META.word;

@@ -10,48 +10,69 @@
 <header class="topbar">
   <div class="wrap">
     <div class="brand"><span class="logo">S</span> SkillProof</div>
-    <div class="navlinks"><span id="who"></span> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../index.html')">Logout</button></div>
+    <div class="navlinks"><a href="../verify.html">🔍 Verify</a> <span id="who"></span> <button class="btn btn-ghost btn-sm" onclick="SP.logout('../student-login.html')">Logout</button></div>
   </div>
 </header>
 
 <div class="wrap page">
   <h1 id="hello">Assalam-o-Alaikum! 👋</h1>
-  <p class="lede">Apna test chuno. Har test mein MCQ + practical. 60% par PASS + certificate! 🎓</p>
+  <p class="lede">Apna test chuno — har test mein MCQ + practical. <b>60%</b> par PASS aur QR-verified certificate! 🎓</p>
+  <div class="stats" id="mystats" style="max-width:560px"></div>
+  <h2 class="section-title">📝 Mere Tests</h2>
   <div class="cards" id="cards"></div>
+  <h2 class="section-title">🎓 Mere Certificates</h2>
+  <div class="cards" id="certcards"></div>
 </div>
 
-<footer class="site"><div class="wrap">SkillProof © 2026</div></footer>
+<footer class="site"><div class="wrap">SkillProof © 2026 — Pehle TEST, phir certificate.</div></footer>
 
 <script src="../assets/js/common.js"></script>
 <script src="../assets/js/questions.js"></script>
 <script>
-var me = SP.requireAuth('student','../index.html');
+var me = SP.requireAuth('student','../student-login.html');
 if(me){
   document.getElementById('hello').textContent = 'Assalam-o-Alaikum, ' + me.name + '! 👋';
   document.getElementById('who').textContent = me.name;
   var results = SP.getResults(me.id);
   var overall = SP.overall(me.id);
+  var certs = Object.values(JSON.parse(localStorage.getItem('sp_certs')||'{}')).filter(function(c){ return c.studentId===me.id; });
+
+  function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+  document.getElementById('mystats').innerHTML =
+    stat(overall.count,'📝 Tests diye') + stat(overall.avg?overall.avg+'%':'—','⭐ Average Score') + stat(certs.length,'🎓 Certificates');
+
   var defs = [
-    {id:'typing', meta:TEST_META.typing, start:'test-typing.html?lang=en'},
-    {id:'word', meta:TEST_META.word, start:'test-mcq.html?subject=word'},
-    {id:'excel', meta:TEST_META.excel, start:'test-mcq.html?subject=excel'},
-    {id:'powerpoint', meta:TEST_META.powerpoint, start:'test-mcq.html?subject=powerpoint'},
-    {id:'inpage', meta:TEST_META.inpage, start:'test-mcq.html?subject=inpage'}
+    {id:'typing', meta:TEST_META.typing, start:'test-typing.html?lang=en', parts:'English + Urdu typing'},
+    {id:'word', meta:TEST_META.word, start:'test-mcq.html?subject=word', parts:'MCQ + practical editor'},
+    {id:'excel', meta:TEST_META.excel, start:'test-mcq.html?subject=excel', parts:'MCQ + spreadsheet'},
+    {id:'powerpoint', meta:TEST_META.powerpoint, start:'test-mcq.html?subject=powerpoint', parts:'MCQ + slide editor'},
+    {id:'inpage', meta:TEST_META.inpage, start:'test-mcq.html?subject=inpage', parts:'MCQ + Urdu typing'}
   ];
   var html = '';
   defs.forEach(function(d){
     var r = results[d.id];
     var st, cls, extra='';
-    if(r){ st = r.passed ? '✅ Completed' : '🔄 Completed'; cls = r.passed?'st-done':'st-prog'; extra = '<div class="score">'+r.total+'%</div>'; }
-    else { st='⏳ Not started'; cls='st-todo'; }
+    if(r){ st = r.passed ? '✅ Pass' : '🔄 Fail — dobara do'; cls = r.passed?'st-done':'st-prog'; extra = '<div class="score">'+r.total+'%</div>'; }
+    else { st='⏳ Shuru nahi kiya'; cls='st-todo'; }
     html += '<div class="tcard"><div class="icon">'+d.meta.icon+'</div><h3>'+d.meta.name+'</h3>'
-      + '<div class="ur">'+d.meta.ur+'</div>'
+      + '<div class="ur">'+d.parts+'</div>'
       + '<span class="status '+cls+'">'+st+'</span>' + extra
-      + '<a class="btn '+(r?'btn-ghost':'btn-blue')+' btn-block mt" href="'+d.start+'">'+(r?'Dobara do / Result':'Start Test')+'</a>'
+      + '<a class="btn '+(r?'btn-ghost':'btn-green')+' btn-block mt" href="'+d.start+'">'+(r?'Dobara do':'Test Shuru Karo →')+'</a>'
       + (r ? '<a class="btn btn-ghost btn-block btn-sm" href="result.html?test='+d.id+'">Result dekho</a>' : '')
+      + (r && r.passed ? '<a class="btn btn-blue btn-block btn-sm" href="certificate.html?test='+d.id+'">🎓 Certificate</a>' : '')
       + '</div>';
   });
   document.getElementById('cards').innerHTML = html;
+
+  var ch = '';
+  if(!certs.length) ch = '<div class="tcard"><div class="icon">🎓</div><h3>Abhi koi certificate nahi</h3><div class="ur">Koi test 60%+ se pass karo — certificate yahan aayega!</div></div>';
+  certs.forEach(function(c){
+    ch += '<div class="tcard"><div class="icon">🎓</div><h3>'+SP.esc(c.course)+'</h3>'
+      + '<div class="ur">'+SP.esc(c.id)+' · '+c.score+'%</div>'
+      + '<span class="status st-done">✅ Verified</span>'
+      + '<a class="btn btn-blue btn-block btn-sm mt" href="certificate.html?test='+SP.esc(c.test||'word')+'">Dekho / Print</a></div>';
+  });
+  document.getElementById('certcards').innerHTML = ch;
 }
 </script>
 </body>

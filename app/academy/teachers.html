@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teachers — SkillProof</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo">S</span> SkillProof <small>ACADEMY</small></div>
+    <div class="navlinks"><button class="btn btn-ghost btn-sm" onclick="SP.logout('../index.html')">Logout</button></div>
+  </div>
+</header>
+
+<div class="wrap page">
+  <div class="acad-layout">
+    <nav class="acad-nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="profile.html">🏫 Academy Profile</a>
+      <a href="certificate-design.html">🎨 Certificate Design</a>
+      <a href="teachers.html" class="active">👨‍🏫 Teachers</a>
+    </nav>
+    <div>
+      <div class="panel" style="margin-bottom:20px">
+        <h2>➕ Naya Teacher Add Karo</h2>
+        <div id="msg"></div>
+        <div class="grid2">
+          <div class="field"><label>Teacher ka naam *</label><input id="tname" placeholder="e.g. Sir Bilal"></div>
+          <div class="field"><label>Login ID *</label><input id="tid" placeholder="e.g. bilal"></div>
+        </div>
+        <div class="field"><label>Password *</label><input id="tpw" type="password" placeholder="••••••"></div>
+        <button class="btn btn-green" onclick="add()">➕ Add Teacher</button>
+        <div class="hint" style="margin-top:10px;color:var(--muted);font-size:14px">Teacher isi ID/password se <b>Teacher Login</b> par login karega.</div>
+      </div>
+      <div class="panel">
+        <h2>👨‍🏫 Teachers ki List</h2>
+        <div style="overflow-x:auto"><table class="data" id="list"></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="site"><div class="wrap">SkillProof © 2026</div></footer>
+
+<script src="../assets/js/common.js"></script>
+<script>
+SP.requireAuth('academy','../academy-login.html');
+function render(){
+  var ts = SP.teachers();
+  var h='<tr><th>Naam</th><th>Login ID</th><th></th></tr>';
+  ts.forEach(function(t){
+    var isDemo = (t.id==='admin');
+    h+='<tr><td>'+SP.esc(t.name)+(isDemo?' <span class="status st-done">demo</span>':'')+'</td>'
+      +'<td style="font-family:monospace">'+SP.esc(t.id)+'</td>'
+      +'<td style="text-align:right">'+(isDemo?'':'<button class="btn btn-red btn-sm" onclick="del(\''+SP.esc(t.id)+'\')">Hatao</button>')+'</td></tr>';
+  });
+  document.getElementById('list').innerHTML=h;
+}
+function add(){
+  document.getElementById('msg').innerHTML='';
+  var name=document.getElementById('tname').value.trim(),
+      id=document.getElementById('tid').value.trim(),
+      pw=document.getElementById('tpw').value.trim();
+  if(!name||!id||!pw){ document.getElementById('msg').innerHTML='<div class="alert alert-err">❌ Teenon khaane zaroori hain!</div>'; return; }
+  var r=SP.addTeacher(name,id,pw);
+  if(r.error){ document.getElementById('msg').innerHTML='<div class="alert alert-err">❌ '+SP.esc(r.error)+'</div>'; return; }
+  document.getElementById('tname').value=''; document.getElementById('tid').value=''; document.getElementById('tpw').value='';
+  document.getElementById('msg').innerHTML='<div class="alert alert-ok">✅ Teacher add ho gaya!</div>';
+  render();
+}
+function del(id){
+  if(!confirm('Teacher "'+id+'" hata dun?')) return;
+  SP.removeTeacher(id); render();
+}
+render();
+</script>
+</body>
+</html>
